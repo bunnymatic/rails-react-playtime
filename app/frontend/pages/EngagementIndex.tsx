@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { CircularProgress, Container, Link, Stack } from '@mui/material';
+import { Box, CircularProgress, Container, Link, Stack } from '@mui/material';
 import { Engagement } from 'types/engagements';
 
 const EngagementIndex = () => {
@@ -21,14 +21,18 @@ const EngagementIndex = () => {
   return (
     <Container>
       <Stack alignItems="center">
+        <h2>Engagements</h2>
         {!engagements ? (
           <CircularProgress sx={{ m: 2 }} />
         ) : (
-          engagements.map(({ id, name }) => {
+          engagements.map(({ id, name, status }) => {
             return (
-              <Link key={id} href={`engagements/${id}/edit`}>
+              <Box key={id} display="flex" flexDirection="row">
+              <Link href={`engagements/${id}/edit`}>
                 {name}
               </Link>
+              <div>{status}</div>
+              </Box>
             );
           })
         )}
