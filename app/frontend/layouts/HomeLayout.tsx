@@ -28,6 +28,14 @@ const HomeLayout = () => {
                 style={{ width: 40, backgroundColor: 'inherit' }}
               />
             </Button>
+            <Button
+              color="primary"
+              to="/async"
+              sx={{ my: 1, mx: 1.5 }}
+              component={RouterLink}
+            >
+              ASYNC
+                          </Button>
           </Box>
         </Toolbar>
       </AppBar>
