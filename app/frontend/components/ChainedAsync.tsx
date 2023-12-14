@@ -23,52 +23,56 @@ const doMutation = ({
     logit(`enqueued ${waitTime}`);
     return setTimeout(() => {
       logit(`done ${waitTime}`);
-      resolve({ waitTime, requestId });
+      return resolve({ waitTime, requestId });
     }, waitTime);
   });
 
-const useAutoSave = ({ asyncRequests, enqueue }) => {
+const useAutoSave = ({ runningRequest, enqueue }) => {
   return useCallback(
     async (val: { waitTime: number; requestId: string }) => {
-      const maybePreviousAutoSave = asyncRequests.length
-        ? asyncRequests[asyncRequests.length - 1]
+      const maybePreviousAutoSave = !!runningRequest
+        ? runningRequest
         : Promise.resolve({ waitTime: 0, requestId: 'initial' });
       const currentAutoSave = maybePreviousAutoSave.then(
-        async (previousResult) => {
-          logit({ previousResult, waitTime: val.waitTime });
+        async (previous) => {
+          console.log(`queuing muation with ${val}`)
+          console.log(previous)
           const requestPromise = doMutation(val);
           const result = await requestPromise;
-          return val;
+          console.log({result})
+          return result;
         }
       );
       enqueue(currentAutoSave);
       return currentAutoSave;
     },
-    [asyncRequests, enqueue]
+    [runningRequest, enqueue]
   );
 };
 
-interface ChainedAsyncUpdaterProps {
-  asyncRequests: Array<() => Promise<unknown>>;
-  enqueue: () => void;
-}
 
 interface RequestPayload {
   requestId: string;
   waitTime: number;
 }
-const ChainedAsyncUpdater = ({
-  asyncRequests,
-  enqueue,
-}): FC<ChainedAsyncUpdaterProps> => {
-  const autoSave = useAutoSave({ asyncRequests, enqueue });
-  const [entries, setEntries] = useState<RequestPayload[]>([]);
+
+export const ChainedAsync = () => {
+  const [results, setResults] = useState<Array<unknown>>([])
+  const [runningRequest, setRunningRequest] = useState<
+    () => Promise<unknown> | undefined
+  >();
+  const enqueue = (request: () => Promise<unknown>) => {
+    setRunningRequest(request);
+    return request;
+  };
+  const autoSave = useAutoSave({ runningRequest, enqueue });
 
   const handleAutoSave = (waitTime: number, requestId: string) => {
-    const promise = autoSave({ waitTime, requestId } as RequestPayload);
+    const promise = autoSave({ waitTime, requestId });
 
-    return promise.then(() => {
-      setEntries([...entries, { waitTime, requestId } as RequestPayload]);
+    return promise.then((result) => {
+      console.log(`updating results ${results.length} ${result}`)
+      setResults([...results, result])
     });
   };
   const handleClick = () => {
@@ -78,37 +82,31 @@ const ChainedAsyncUpdater = ({
     return enqueue(handleAutoSave(waitTime, requestId));
   };
 
-  const onClick = async () => {
-    logit('clicked');
-    return handleClick().then((r) =>
-      logit(`${JSON.stringify(r)} click resolved `)
-    );
-  };
+//   const onClick =() => {
+//     logit('clicked');
+//     return handleClick().then((r) =>
+//       logit(`${JSON.stringify(r)} click resolved `)
+//     );000
+//   };
 
   return (
     <div>
       <div>
-        <h2>Queue Size: #{asyncRequests.length}</h2>
-        {entries.map((e) => (
-          <div key={e.requestId}>
-            <pre>{JSON.stringify(e)}</pre>
+        <h2>Hi {new Date().getTime()}</h2>
+        <div>count: {results.length}</div>
+        { results.map((result) => (
+          
+          <div key={JSON.stringify(result)}>
+            
+            <pre>{JSON.stringify(result)}</pre>
           </div>
-        ))}
+          ))
+        }
       </div>
-      <button onClick={onClick}>add request</button>
+      <button onClick={handleClick}>add request</button>
     </div>
   );
-};
-export const ChainedAsync = (): FC => {
-  const [asyncRequests, setAsyncRequests] = useState<
-    () => Promise<Array[number]>
-  >([]);
-  const enqueue = (request) => {
-    setAsyncRequests([...asyncRequests, request]);
-    return request;
-  };
-
-  return (
-    <ChainedAsyncUpdater asyncRequests={asyncRequests} enqueue={enqueue} />
-  );
+  // return (
+  //   <ChainedAsyncUpdater runningRequest={runningRequest} enqueue={enqueue} />
+  // );
 };
