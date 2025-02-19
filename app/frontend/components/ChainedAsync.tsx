@@ -35,7 +35,7 @@ const useAutoSave = ({ runningRequest, enqueue }) => {
         : Promise.resolve({ waitTime: 0, requestId: 'initial' });
       const currentAutoSave = maybePreviousAutoSave.then(
         async (previous) => {
-          console.log(`queuing muation with ${val}`)
+          console.log(`queuing mutation with ${val}`)
           console.log(previous)
           const requestPromise = doMutation(val);
           const result = await requestPromise;
@@ -76,7 +76,7 @@ export const ChainedAsync = () => {
     });
   };
   const handleClick = () => {
-    const waitTime = getRandomInt(1000, 2000);
+    const waitTime = getRandomInt(200, 1000);
     const requestId = genRandomHex(12);
     logit(`enqueing ${waitTime}`);
     return enqueue(handleAutoSave(waitTime, requestId));
